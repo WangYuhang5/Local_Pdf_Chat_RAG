@@ -1255,30 +1255,27 @@ def update_bm25_index():
     """更新BM25索引，从内存中的映射加载所有文档"""
     global faiss_contents_map, faiss_id_order_for_index
     try:
-        # Use the ordered list of IDs to ensure consistency
         doc_ids = faiss_id_order_for_index
         if not doc_ids:
             logging.warning("没有可索引的文档 (FAISS ID列表为空)")
             BM25_MANAGER.clear()
             return False
 
-        # Retrieve documents in the correct order
         documents = [faiss_contents_map.get(doc_id, "") for doc_id in doc_ids]
-
-        # Filter out any potential empty documents if necessary, though map access should be safe
         valid_docs_with_ids = [(doc_id, doc) for doc_id, doc in zip(doc_ids, documents) if doc]
+
         if not valid_docs_with_ids:
             logging.warning("没有有效的文档内容可用于BM25索引")
             BM25_MANAGER.clear()
-        return False
+            return False
 
-        # Separate IDs and documents again for building the index
         final_doc_ids = [item[0] for item in valid_docs_with_ids]
         final_documents = [item[1] for item in valid_docs_with_ids]
 
         BM25_MANAGER.build_index(final_documents, final_doc_ids)
         logging.info(f"BM25索引更新完成，共索引 {len(final_doc_ids)} 个文档")
         return True
+
     except Exception as e:
         logging.error(f"更新BM25索引失败: {str(e)}")
         return False
